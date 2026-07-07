@@ -8,7 +8,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const SOURCE_USER = "Haseeb Devops";
 const TARGET_USER = "Natenal FSD";
-const POLL_INTERVAL_MS = 5000;
+const POLL_INTERVAL_MS = 300000;
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
@@ -102,7 +102,7 @@ async function getLatestIncomingMessage(page) {
 
 async function navigateToChat(page, userName) {
   console.log(`🔍 Opening chat with: "${userName}"`);
-  const chatSelector = `[data-tid="chat-list-item"]:has-text("${userName}")`;
+  const chatSelector = `[data-testid="list-item"]:has(span[role="text"]:text("${userName}"))`;
   await page.waitForSelector(chatSelector, { timeout: 15000 });
   await page.click(chatSelector);
   await page.waitForTimeout(2000);
@@ -154,10 +154,13 @@ async function getOrCreateSession() {
       );
       const sessionData = res.data.data || res.data;
       if (sessionData.status !== "running") {
-        console.warn(`⚠️ Session status is "${sessionData.status}". Creating new session...`);
+        console.warn(
+          `⚠️ Session status is "${sessionData.status}". Creating new session...`,
+        );
       } else {
         const cdp_url = `wss://connect.anchorbrowser.io?apiKey=${ANCHOR_API_KEY}&sessionId=${existingSessionId}`;
-        const live_view_url = sessionData.live_view_url || sessionData.liveViewUrl;
+        const live_view_url =
+          sessionData.live_view_url || sessionData.liveViewUrl;
         console.log(`✅ Reconnected to session: ${existingSessionId}`);
         if (live_view_url) console.log(`   Live View: ${live_view_url}`);
         return { sessionId: existingSessionId, cdp_url };
@@ -218,22 +221,26 @@ async function runTeamsMonitor() {
     const page = context.pages()[0] || (await context.newPage());
 
     const currentUrl = page.url();
-    const isAlreadyOnTeams = currentUrl.includes("teams.microsoft.com") || currentUrl.includes("teams.cloud.microsoft");
+    const isAlreadyOnTeams =
+      currentUrl.includes("teams.microsoft.com") ||
+      currentUrl.includes("teams.cloud.microsoft");
+    const chatAlreadyVisible =
+      isAlreadyOnTeams && (await page.isVisible('[data-testid="list-item"]'));
 
-    if (isAlreadyOnTeams) {
-      console.log("🌐 Teams already open, skipping navigation.");
+    if (chatAlreadyVisible) {
+      console.log("🌐 Teams already loaded, skipping navigation.");
     } else {
       console.log("🌐 Navigating to Microsoft Teams...");
       await page.goto("https://teams.microsoft.com/v2/", {
         waitUntil: "domcontentloaded",
         timeout: 60000,
       });
-    }
 
-    console.log("⏳ Waiting for Teams to fully load...");
-    await page.waitForSelector('[data-tid="chat-list-item"]', {
-      timeout: 75000,
-    });
+      console.log("⏳ Waiting for Teams to fully load...");
+      await page.waitForSelector('[data-testid="list-item"]', {
+        timeout: 75000,
+      });
+    }
     console.log("✅ Teams loaded.");
 
     if (await page.isVisible('input[type="email"]')) {
@@ -257,7 +264,10 @@ async function runTeamsMonitor() {
       );
     }
 
-    await notifyMe(page, `🟢 Bot is online. Now monitoring "${SOURCE_USER}" for incoming tasks.`);
+    await notifyMe(
+      page,
+      `🟢 Bot is online. Now monitoring "${SOURCE_USER}" for incoming tasks.`,
+    );
     await navigateToChat(page, SOURCE_USER);
 
     while (true) {
@@ -288,7 +298,10 @@ async function runTeamsMonitor() {
         }
       } catch (pollError) {
         console.error("⚠️ Poll cycle error:", pollError.message);
-        await notifyMe(page, `⚠️ Error in monitoring loop: ${pollError.message}`);
+        await notifyMe(
+          page,
+          `⚠️ Error in monitoring loop: ${pollError.message}`,
+        );
         await navigateToChat(page, SOURCE_USER);
         await page.waitForTimeout(5000);
       }
