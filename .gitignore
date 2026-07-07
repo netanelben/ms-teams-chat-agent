@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Local Teams browser profile
+.teams-browser-profile/
+
 # Build output
 .next/
 out/

@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "teams:local": "node ms-teams-local.js",
+    "teams:anchor": "node ms-teams-test.js"
   },
   "keywords": [],
   "author": "",
