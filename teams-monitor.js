@@ -2,14 +2,13 @@ import OpenAI from "openai";
 
 export const SOURCE_USER = process.env.SOURCE_USER || "Haseeb Devops";
 export const TARGET_USER = process.env.TARGET_USER || "Natenal FSD";
-export const POLL_INTERVAL_MS = Number(process.env.POLL_INTERVAL_MS) || 500;
+export const POLL_INTERVAL_MS = Number(process.env.POLL_INTERVAL_MS) || 60_000; // 1 minute
 const REPLY_DELAY_MIN_MS = Number(process.env.REPLY_DELAY_MIN_MS) || 3000;
 const REPLY_DELAY_MAX_MS = Number(process.env.REPLY_DELAY_MAX_MS) || 7000;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const FALLBACK_REPLY =
-  "one moment, let me check that and get back to you";
+const FALLBACK_REPLY = "one moment, let me check that and get back to you";
 
 const SYSTEM_PROMPT = `You are an intelligent assistant that helps gather task requirements from a user named "${SOURCE_USER}". 
 He often sends incomplete requests without all the necessary details.
@@ -24,6 +23,16 @@ IMPORTANT RULES:
 - Be friendly but concise in your questions.
 - Ask ONE or TWO questions at a time, not a long list.
 - Remember context from the conversation history.
+
+REPLY STYLE (for normal chat replies only, not TASK_READY JSON):
+- Write like a busy colleague in Teams chat, not an AI or support bot.
+- Keep replies very short: usually one sentence, max two.
+- Use lowercase everywhere except proper names (people, companies, products, services).
+- Do not capitalize the first word of a sentence unless it is a name.
+- No greetings, sign-offs, bullet lists, numbered lists, markdown, or emojis.
+- Avoid bot-like phrases such as "Certainly", "I'd be happy to help", "Great question", "Thank you for reaching out".
+- Prefer casual phrasing like "which env is this for?" over "Could you please clarify which environment this applies to?"
+
 - If the message is a direct question or request that you cannot confidently answer with accurate information, do NOT guess. Respond with exactly:
 
 \`\`\`NEED_TO_CHECK
@@ -74,6 +83,40 @@ async function waitBeforeReply(page) {
   await page.waitForTimeout(delayMs);
 }
 
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function humanizeReply(text) {
+  let reply = text
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/^[\s\-*•]+/gm, "")
+    .replace(/\n+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  reply = reply.toLowerCase();
+
+  const names = new Set(
+    [SOURCE_USER, TARGET_USER, "Haseeb", "Natenal"]
+      .flatMap((name) => name.split(/\s+/))
+      .filter((part) => part.length > 1),
+  );
+
+  for (const name of names) {
+    reply = reply.replace(
+      new RegExp(`\\b${escapeRegExp(name)}\\b`, "gi"),
+      name,
+    );
+  }
+
+  for (const name of [SOURCE_USER, TARGET_USER]) {
+    reply = reply.replace(new RegExp(escapeRegExp(name), "gi"), name);
+  }
+
+  return reply;
+}
+
 async function evaluateWithLLM(newMessage) {
   conversationHistory.push({ role: "user", content: newMessage });
 
@@ -101,11 +144,19 @@ async function evaluateWithLLM(newMessage) {
       const taskData = JSON.parse(taskMatch[1]);
       return { type: "task_ready", task: taskData, reply: null };
     } catch {
-      return { type: "follow_up", reply: assistantMessage, task: null };
+      return {
+        type: "follow_up",
+        reply: humanizeReply(assistantMessage),
+        task: null,
+      };
     }
   }
 
-  return { type: "follow_up", reply: assistantMessage, task: null };
+  return {
+    type: "follow_up",
+    reply: humanizeReply(assistantMessage),
+    task: null,
+  };
 }
 
 export async function sendMessage(page, text) {
@@ -117,44 +168,50 @@ export async function sendMessage(page, text) {
 }
 
 export async function getLatestChatMessage(page) {
-  return page.evaluate(({ sourceUser }) => {
-    const items = [
-      ...document.querySelectorAll('[data-tid="chat-pane-item"]'),
-    ].filter((item) => item.querySelector('[data-testid="message-wrapper"]'));
+  return page.evaluate(
+    ({ sourceUser }) => {
+      const items = [
+        ...document.querySelectorAll('[data-tid="chat-pane-item"]'),
+      ].filter((item) => item.querySelector('[data-testid="message-wrapper"]'));
 
-    for (let i = items.length - 1; i >= 0; i--) {
-      const item = items[i];
-      const authorEl = item.querySelector('[data-tid="message-author-name"]');
-      const messageEl = item.querySelector('[data-tid="chat-pane-message"]');
-      if (!authorEl || !messageEl) continue;
+      for (let i = items.length - 1; i >= 0; i--) {
+        const item = items[i];
+        const authorEl = item.querySelector('[data-tid="message-author-name"]');
+        const messageEl = item.querySelector('[data-tid="chat-pane-message"]');
+        if (!authorEl || !messageEl) continue;
 
-      const contentEl = messageEl.querySelector("[data-message-content]");
-      if (!contentEl) continue;
+        const contentEl = messageEl.querySelector("[data-message-content]");
+        if (!contentEl) continue;
 
-      const clone = contentEl.cloneNode(true);
-      clone
-        .querySelectorAll('[data-tid="quoted-reply-card"]')
-        .forEach((el) => el.remove());
+        const clone = contentEl.cloneNode(true);
+        clone
+          .querySelectorAll('[data-tid="quoted-reply-card"]')
+          .forEach((el) => el.remove());
 
-      let text = clone.innerText.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+        let text = clone.innerText
+          .replace(/\u00a0/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
 
-      if (!text) {
-        text = (contentEl.getAttribute("aria-label") || "").trim();
+        if (!text) {
+          text = (contentEl.getAttribute("aria-label") || "").trim();
+        }
+
+        if (!text) continue;
+
+        const author = authorEl.textContent.trim();
+        return {
+          id: messageEl.getAttribute("data-mid"),
+          text,
+          author,
+          isFromSource: author === sourceUser,
+        };
       }
 
-      if (!text) continue;
-
-      const author = authorEl.textContent.trim();
-      return {
-        id: messageEl.getAttribute("data-mid"),
-        text,
-        author,
-        isFromSource: author === sourceUser,
-      };
-    }
-
-    return null;
-  }, { sourceUser: SOURCE_USER });
+      return null;
+    },
+    { sourceUser: SOURCE_USER },
+  );
 }
 
 export async function getLatestIncomingMessage(page) {
