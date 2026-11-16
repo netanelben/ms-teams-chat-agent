@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Teams requirements agent</title>
+  <style>
+    :root {
+      --ink: #1c1915;
+      --muted: #5e584e;
+      --line: #e4ddd2;
+      --paper: #f7f4ee;
+      --card: #fffcf8;
+      --navy: #1b3a4b;
+      --navy-ink: #f4f7f8;
+      --moss: #1e4d38;
+      --moss-wash: #e5f0ea;
+      --moss-line: #1e4d38;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.45;
+    }
+
+    .page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 48px 28px 72px;
+    }
+
+    header.mast h1 {
+      margin: 0 0 12px;
+      font-family: Georgia, "Iowan Old Style", Palatino, serif;
+      font-weight: 500;
+      font-size: 44px;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+
+    .lede {
+      margin: 0;
+      max-width: 68ch;
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 28px 0 8px;
+    }
+
+    .fact {
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 14px 16px 12px;
+    }
+
+    .fact b {
+      display: block;
+      font-family: Georgia, "Iowan Old Style", Palatino, serif;
+      font-size: 28px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+
+    .fact span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    section { margin-top: 36px; }
+
+    h2 {
+      margin: 0 0 8px;
+      font-family: Georgia, "Iowan Old Style", Palatino, serif;
+      font-weight: 500;
+      font-size: 26px;
+      letter-spacing: -0.02em;
+    }
+
+    .section-lead {
+      margin: 0 0 14px;
+      max-width: 70ch;
+      color: var(--muted);
+    }
+
+    figure {
+      margin: 0;
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 16px 16px 12px;
+    }
+
+    figcaption {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    figcaption strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      font-family: "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    }
+
+    .note {
+      margin: 10px 2px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .outcomes {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .outcome {
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 16px 16px 14px;
+      min-height: 100%;
+    }
+
+    .outcome header {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .num {
+      font-family: Georgia, "Iowan Old Style", Palatino, serif;
+      font-size: 22px;
+      line-height: 1;
+      color: var(--navy);
+    }
+
+    .outcome.handoff .num { color: var(--moss); }
+
+    .outcome h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .outcome p { margin: 0 0 8px; }
+
+    .outcome .when {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .quote {
+      margin: 10px 0 0;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-family: Georgia, "Iowan Old Style", Palatino, serif;
+      font-size: 15px;
+    }
+
+    .brief {
+      margin: 12px 0 0;
+      padding: 12px 14px;
+      background: var(--moss-wash);
+      border: 1px solid var(--moss-line);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 28px;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    ol, ul { margin: 0; padding-left: 18px; }
+    li { margin: 0 0 8px; }
+    li:last-child { margin-bottom: 0; }
+
+    .files {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border: 1px solid var(--line);
+      font-size: 14px;
+    }
+
+    .files th, .files td {
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    .files tr:last-child td { border-bottom: 0; }
+    .files th { color: var(--muted); font-weight: 600; font-size: 12px; }
+    code {
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    footer {
+      margin-top: 36px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 800px) {
+      header.mast h1 { font-size: 34px; }
+      .facts, .outcomes, .split { grid-template-columns: 1fr; }
+      figcaption { flex-direction: column; gap: 2px; }
+    }
+
+    @media print {
+      body { background: white; }
+      .page { padding: 0; max-width: none; }
+      figure, .outcome, .fact { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="mast">
+      <h1>Teams requirements agent</h1>
+      <p class="lede">A signed-in Teams session watches one colleague’s chat. GPT-4o asks for the missing pieces of a task. When the request is complete, a second chat receives a structured brief.</p>
+    </header>
+
+    <div class="facts">
+      <div class="fact"><b>60s</b><span>Default poll of the newest chat bubble</span></div>
+      <div class="fact"><b>gpt-4o</b><span>One system prompt, the whole thread resent each turn</span></div>
+      <div class="fact"><b>3–7s</b><span>Random pause before a conversational reply</span></div>
+    </div>
+
+    <section>
+      <h2>Two ways in, one monitor</h2>
+      <p class="section-lead">Local Chrome and an Anchor cloud browser are launchers. Both hand a Playwright page to <code>runTeamsMonitor</code>. The decision loop does not know which browser it is driving.</p>
+      <figure>
+        <figcaption>
+          <strong>Figure 1. Process boundary</strong>
+          <span>Source: ms-teams-local.js, ms-teams-test.js, teams-monitor.js</span>
+        </figcaption>
+        <svg viewBox="0 0 960 376" role="img" aria-label="Local Chrome and Anchor Browser both connect to teams-monitor.js, which reads the Teams page and calls GPT-4o.">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 1 1.5 L 8.5 5 L 1 8.5" fill="none" stroke="#1c1915" stroke-width="1.4" />
+            </marker>
+          </defs>
+          <path d="M 300 88 V 118 H 480 V 152" fill="none" stroke="#1c1915" stroke-width="1.5" marker-end="url(#ah)" />
+          <path d="M 660 88 V 118 H 480" fill="none" stroke="#1c1915" stroke-width="1.5" />
+          <path d="M 480 224 V 256 H 300 V 288" fill="none" stroke="#1c1915" stroke-width="1.5" marker-end="url(#ah)" />
+          <path d="M 480 256 H 660 V 288" fill="none" stroke="#1c1915" stroke-width="1.5" marker-end="url(#ah)" />
+
+          <g>
+            <rect x="160" y="16" width="280" height="72" fill="#fffcf8" stroke="#1c1915" stroke-width="1.5" />
+            <text x="300" y="44" text-anchor="middle" font-size="15" font-weight="600" fill="#1c1915">Local Chrome</text>
+            <text x="300" y="66" text-anchor="middle" font-size="12" fill="#5e584e">pnpm teams:local · persistent profile</text>
+          </g>
+          <g>
+            <rect x="520" y="16" width="280" height="72" fill="#fffcf8" stroke="#1c1915" stroke-width="1.5" />
+            <text x="660" y="44" text-anchor="middle" font-size="15" font-weight="600" fill="#1c1915">Anchor Browser</text>
+            <text x="660" y="66" text-anchor="middle" font-size="12" fill="#5e584e">pnpm teams:anchor · CDP session</text>
+          </g>
+          <g>
+            <rect x="320" y="152" width="320" height="72" fill="#1b3a4b" stroke="#1b3a4b" />
+            <text x="480" y="180" text-anchor="middle" font-size="15" font-weight="600" fill="#f4f7f8">teams-monitor.js</text>
+            <text x="480" y="202" text-anchor="middle" font-size="12" fill="#d5e0e6">poll, read, decide, send</text>
+          </g>
+          <g>
+            <rect x="160" y="288" width="280" height="72" fill="#fffcf8" stroke="#1c1915" stroke-width="1.5" />
+            <text x="300" y="316" text-anchor="middle" font-size="15" font-weight="600" fill="#1c1915">Teams page</text>
+            <text x="300" y="338" text-anchor="middle" font-size="12" fill="#5e584e">chat list, bubbles, text box</text>
+          </g>
+          <g>
+            <rect x="520" y="288" width="280" height="72" fill="#e7eef3" stroke="#1b3a4b" stroke-width="1.5" />
+            <text x="660" y="316" text-anchor="middle" font-size="15" font-weight="600" fill="#1c1915">GPT-4o</text>
+            <text x="660" y="338" text-anchor="middle" font-size="12" fill="#5e584e">system prompt plus the thread</text>
+          </g>
+        </svg>
+      </figure>
+      <p class="note">The first local launch may wait on a manual sign-in. The profile directory is gitignored, so the session stays on the machine.</p>
+    </section>
+
+    <section>
+      <h2>What happens to one message</h2>
+      <p class="section-lead">Each wake-up reads a single bubble: the newest one in the requester’s chat. The model picks a contract. The monitor decides what actually gets typed.</p>
+      <figure>
+        <figcaption>
+          <strong>Figure 2. Poll to reply</strong>
+          <span>Source: runTeamsMonitor and evaluateWithLLM</span>
+        </figcaption>
+        <svg viewBox="0 0 960 540" role="img" aria-label="Flow from a 60 second poll through a new-message check and GPT-4o to a follow-up, a hold, or a task brief.">
+          <defs>
+            <marker id="af" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 1 1.5 L 8.5 5 L 1 8.5" fill="none" stroke="#1c1915" stroke-width="1.4" />
+            </marker>
+          </defs>
+          <path d="M 480 88 V 144" fill="none" stroke="#1c1915" stroke-width="1.5" marker-end="url(#af)" />
+          <path d="M 360 180 H 324" fill="none" stroke="#1c1915" stroke-width="1.5" marker-end="url(#af)" />
+          <path d="M 480 216 V 272" fill="none" stroke="#1c1915" stroke-width="1.5" marker-end="url(#af)" />
+          <path d="M 480 344 V 420 H 200 V 452" fill="none" stroke="#1c1915" stroke-width="1.5" marker-end="url(#af)" />
+          <path d="M 480 420 V 452" fill="none" stroke="#1c1915" stroke-width="1.5" marker-end="url(#af)" />
+          <path d="M 480 420 H 760 V 452" fill="none" stroke="#1c1915" stroke-width="1.5" marker-end="url(#af)" />
+
+          <text x="492" y="124" font-size="12" fill="#5e584e">read</text>
+          <text x="342" y="168" text-anchor="middle" font-size="12" fill="#5e584e">no</text>
+          <text x="492" y="252" font-size="12" fill="#5e584e">yes</text>
+          <text x="330" y="408" text-anchor="middle" font-size="12" fill="#5e584e">prose</text>
+          <text x="492" y="378" font-size="12" fill="#5e584e">NEED_TO_CHECK</text>
+          <text x="620" y="408" text-anchor="middle" font-size="12" fill="#5e584e">TASK_READY</text>
+
+          <g>
+            <rect x="360" y="16" width="240" height="72" fill="#fffcf8" stroke="#1c1915" stroke-width="1.5" />
+            <text x="480" y="44" text-anchor="middle" font-size="15" font-weight="600" fill="#1c1915">Poll source chat</text>
+            <text x="480" y="66" text-anchor="middle" font-size="12" fill="#5e584e">every 60 seconds</text>
+          </g>
+          <g>
+            <rect x="80" y="144" width="240" height="72" fill="#fffcf8" stroke="#1c1915" stroke-width="1.5" />
+            <text x="200" y="172" text-anchor="middle" font-size="15" font-weight="600" fill="#1c1915">Unchanged</text>
+            <text x="200" y="194" text-anchor="middle" font-size="12" fill="#5e584e">wait for the next poll</text>
+          </g>
+          <g>
+            <rect x="360" y="144" width="240" height="72" fill="#fffcf8" stroke="#1c1915" stroke-width="1.5" />
+            <text x="480" y="172" text-anchor="middle" font-size="15" font-weight="600" fill="#1c1915">New message?</text>
+            <text x="480" y="194" text-anchor="middle" font-size="12" fill="#5e584e">message id, else full text</text>
+          </g>
+          <g>
+            <rect x="360" y="272" width="240" height="72" fill="#e7eef3" stroke="#1b3a4b" stroke-width="1.5" />
+            <text x="480" y="300" text-anchor="middle" font-size="15" font-weight="600" fill="#1c1915">GPT-4o</text>
+            <text x="480" y="322" text-anchor="middle" font-size="12" fill="#5e584e">full thread kept in memory</text>
+          </g>
+          <g>
+            <rect x="80" y="452" width="240" height="72" fill="#fffcf8" stroke="#1c1915" stroke-width="1.5" />
+            <text x="200" y="480" text-anchor="middle" font-size="15" font-weight="600" fill="#1c1915">Follow-up</text>
+            <text x="200" y="502" text-anchor="middle" font-size="12" fill="#5e584e">humanize, pause, send</text>
+          </g>
+          <g>
+            <rect x="360" y="452" width="240" height="72" fill="#fffcf8" stroke="#1c1915" stroke-width="1.5" />
+            <text x="480" y="480" text-anchor="middle" font-size="15" font-weight="600" fill="#1c1915">Defer</text>
+            <text x="480" y="502" text-anchor="middle" font-size="12" fill="#5e584e">fixed hold sentence</text>
+          </g>
+          <g>
+            <rect x="640" y="452" width="240" height="72" fill="#e5f0ea" stroke="#1e4d38" stroke-width="1.5" />
+            <text x="760" y="480" text-anchor="middle" font-size="15" font-weight="600" fill="#1c1915">Task ready</text>
+            <text x="760" y="502" text-anchor="middle" font-size="12" fill="#1e4d38">brief the target, then reset</text>
+          </g>
+        </svg>
+      </figure>
+      <p class="note">A chat reply waits a random 3–7 seconds. The task brief is sent immediately, then conversation history is cleared.</p>
+    </section>
+
+    <section>
+      <h2>The only three replies</h2>
+      <p class="section-lead">The prompt is allowed to return one of these. <code>processIncomingMessage</code> is what the requester and the target actually see.</p>
+      <div class="outcomes">
+        <article class="outcome">
+          <header><span class="num">1</span><h3>Follow-up</h3></header>
+          <p class="when">The model writes ordinary prose because a detail is missing. It is told to ask one or two questions.</p>
+          <p>The code lowercases it, strips lists and fences, restores names, pauses, and types into the source chat.</p>
+          <p class="quote">which env is this for?</p>
+        </article>
+        <article class="outcome">
+          <header><span class="num">2</span><h3>Defer</h3></header>
+          <p class="when">The model wraps <code>NEED_TO_CHECK</code> when a direct answer would be a guess.</p>
+          <p>That completion is discarded. The same pause, then one fixed sentence. The thread stays open.</p>
+          <p class="quote">one moment, let me check that and get back to you</p>
+        </article>
+        <article class="outcome handoff">
+          <header><span class="num">3</span><h3>Task ready</h3></header>
+          <p class="when">The model wraps JSON in <code>TASK_READY</code>: title, description, priority, details, original request.</p>
+          <p>The monitor opens the target chat and sends this shape. No pause, no lowercase pass. History resets. The brief below is an example, not a captured chat.</p>
+          <div class="brief">New Task from the requester:
+
+Title: Restart payments worker
+Priority: high
+
+Description:
+Restart the worker in staging after 18:00.
+
+Details:
+Staging only. No production. Window is tonight.
+
+Original request: "please restart the payments worker"</div>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>How to walk it</h2>
+      <div class="split">
+        <div>
+          <h3>Order that holds up</h3>
+          <ol>
+            <li>The agent types as the signed-in user, in chats that account can already open.</li>
+            <li>Point at the seam: both scripts end by calling <code>runTeamsMonitor(page)</code>.</li>
+            <li>Walk one new id into <code>evaluateWithLLM</code>, then the three branches.</li>
+            <li>Close on the limit you would fix next: keep a queue of unread bubbles, and store the thread somewhere that survives a restart.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Name these first</h3>
+          <ul>
+            <li>Only the newest bubble is read. A burst keeps the last message.</li>
+            <li>Match is the display name in the chat list, not a user id.</li>
+            <li>Teams DOM test ids are the integration. A redesign breaks the poll.</li>
+            <li>Memory is a module-level array. It clears after a handoff, and it is empty after a restart.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Where the code sits</h2>
+      <table class="files">
+        <thead>
+          <tr><th>File</th><th>What to say while it is on screen</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>ms-teams-local.js</code></td><td>Visible Chrome, persistent profile, requires <code>OPENAI_API_KEY</code>.</td></tr>
+          <tr><td><code>ms-teams-test.js</code></td><td>Creates or reuses an Anchor session, then connects over CDP. The npm script is <code>teams:anchor</code>.</td></tr>
+          <tr><td><code>teams-monitor.js</code></td><td>The agent: selectors, prompt, poll loop, humanizer, and the brief template.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer>Drawn from the source in this repo. Defaults, delays, and the three reply contracts match <code>teams-monitor.js</code>. Notes are in <code>docs/walkthrough.md</code>.</footer>
+  </main>
+</body>
+</html>
